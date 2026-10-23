@@ -92,6 +92,8 @@ function TodoBanner() {
   const threadId = scope.kind === "thread" ? scope.threadId : "";
   const items = useAgentTodos(threadId);
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  // Closing hides the block for this exact list; a new or changed list brings it back.
+  const [dismissed, setDismissed] = useState("");
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
       try {
@@ -103,18 +105,20 @@ function TodoBanner() {
     });
   }, []);
 
-  if (!threadId || items.length === 0) return null;
+  const listKey = `${threadId}:${items.map((i: TodoItem) => i.id).join(",")}`;
+  if (!threadId || items.length === 0 || dismissed === listKey) return null;
   const done = items.filter((i: TodoItem) => i.status === "completed").length;
   const current = items.find((i: TodoItem) => i.status === "in_progress");
 
   return (
     <div style={{ border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)", overflow: "hidden", fontSize: 13 }}>
       <style>{KEYFRAMES}</style>
+      <div style={{ display: "flex", alignItems: "center", borderBottom: collapsed ? "none" : "1px solid var(--border)" }}>
       <button
         type="button"
         onClick={toggle}
         aria-expanded={!collapsed}
-        style={{ all: "unset", boxSizing: "border-box", width: "100%", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: collapsed ? "none" : "1px solid var(--border)" }}
+        style={{ all: "unset", boxSizing: "border-box", flex: 1, minWidth: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "8px 4px 8px 12px" }}
       >
         <span style={{ fontWeight: 600 }}>Tasks</span>
         {collapsed && current ? (
@@ -134,6 +138,18 @@ function TodoBanner() {
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
+      <button
+        type="button"
+        onClick={() => setDismissed(listKey)}
+        aria-label="Close task list"
+        title="Close"
+        style={{ all: "unset", boxSizing: "border-box", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, margin: "0 6px 0 0", borderRadius: 6, color: "var(--muted-foreground)" }}
+      >
+        <svg viewBox="0 0 24 24" style={{ width: 14, height: 14 }} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+      </div>
       {!collapsed && (
         <div style={{ padding: "6px 12px 8px", display: "grid", gap: 2 }}>
           {items.map((item: TodoItem) => (
